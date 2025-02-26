@@ -20,7 +20,10 @@ TriggerEvent("chat:addSuggestion", "/armour", "Give yourself some armour!")
 
 RegisterCommand("heal", function()
     if HealCooldown then
-        return exports["Venice-Notification"]:Notify("You are on cooldown for this!", 5000, "error")
+        if Config.NotifyEnabled then
+            return SendNoti(cache.playerId, "You are on cooldown for this!", "error")
+        end
+        return
     end
 
     if not cache.ped or cache.ped == 0 then
@@ -28,15 +31,23 @@ RegisterCommand("heal", function()
     end
 
     if LocalPlayer.state.dead or IsEntityDead(cache.ped) then
-        return exports["Venice-Notification"]:Notify("You cannot use this whilst dead!", 5000, "error")
+        if Config.NotifyEnabled then
+            return SendNoti(cache.playerId, "You cannot use this whilst dead!", "error")
+        else
+            print("test")
+        end
+        return
     end
 
     SetEntityHealth(cache.ped, 200)
     HealCooldown = true
-    exports["Venice-Notification"]:Notify("Health has been restored!", 5000, "success")
+    if Config.NotifyEnabled then
+        SendNoti(cache.playerId, "Health has been restored!", "success")
+    end
 
-    Wait(5 * 60 * 1000)
-    HealCooldown = false
+    -- Wait for 5 minutes (cooldown)
+    Wait(5 * 60 * 1000)  -- 5 minutes cooldown
+    HealCooldown = false  -- Reset cooldown after wait
 end, false)
 
 local function GetArmourAmount()
@@ -45,7 +56,10 @@ end
 
 RegisterCommand("armour", function()
     if ArmourCoolDown then
-        return exports["Venice-Notification"]:Notify("You are on cooldown for this!", 5000, "error")
+        if Config.NotifyEnabled then
+            return SendNoti(cache.playerId, "You are on cooldown for this!", "error")
+        end
+        return
     end
 
     if not cache.ped or cache.ped == 0 then
@@ -53,22 +67,28 @@ RegisterCommand("armour", function()
     end
 
     if LocalPlayer.state.dead or IsEntityDead(cache.ped) then
-        return exports["Venice-Notification"]:Notify("You cannot use this whilst dead!", 5000, "error")
+        if Config.NotifyEnabled then
+            return SendNoti(cache.playerId, "You cannot use this whilst dead!", "error")
+        end
+        return
     end
 
     SetPedArmour(cache.ped, GetArmourAmount())
     ArmourCoolDown = true
-    exports["Venice-Notification"]:Notify("Armour has been applied!", 5000, "success")
+    if Config.NotifyEnabled then
+        SendNoti(cache.playerId, "Armour has been applied!", "success")
+    end
 
-    Wait(5 * 60 * 1000)
-    ArmourCoolDown = false
+    -- Wait for 5 minutes (cooldown)
+    Wait(5 * 60 * 1000)  -- 5 minutes cooldown
+    ArmourCoolDown = false  -- Reset cooldown after wait
 end, false)
 
 local function DisableWhipping()
     CreateThread(function()
         while WhippingDisabled do
             Wait(0)
-            DisableControlAction(0, 141, true)
+            DisableControlAction(0, 141, true)  -- Disable whip action
             DisableControlAction(0, 142, true)
         end
     end)
@@ -99,3 +119,42 @@ CreateThread(function()
         ResetPlayerStamina(cache.playerId)
     end
 end)
+
+function SendNoti(playerId, message, type)
+    if not message or message == "" then return end
+
+    local messageType, color
+    if type == "success" then
+        messageType = "SYSTEM"
+        color = "~g~"
+    elseif type == "error" then
+        messageType = "ERROR"
+        color = "~r~"
+    else
+        messageType = "INFO"
+        color = "~b~"
+    end
+
+    local formattedMessage = string.format("%s[%s] ~w~%s", color, messageType, message)
+
+    if Config.Notify == 0 then
+        TriggerEvent('chat:addMessage', {
+            args = {formattedMessage}
+        })
+    elseif Config.Notify == 1 then
+        exports['okokNotify']:Alert(Config.Prefix, message, Config.NotifyDuration, type, true)
+    elseif Config.Notify == 2 then
+        if type == "success" then
+            exports["Venice-Notification"]:Notify(message, Config.NotifyDuration, 'check')
+        elseif type == "error" then
+            exports["Venice-Notification"]:Notify(message, Config.NotifyDuration, 'error')
+        end
+    elseif Config.Notify == 3 then
+        lib.notify({
+            title = Config.Prefix,
+            description = message,
+            type = type,
+            position = 'center-right'
+        })
+    end
+end
