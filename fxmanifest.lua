@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-author 'Joey B @ Next Dev Labs'
+author 'Joey B @ Next Dev Labs | Edited by Danboi'
 description 'A Simple standalone Health And Armour Script'
 version '1.0.0'
 
